@@ -63,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       tl.from($(this), {
         autoAlpha: 0,
-        scale: 1,
         duration: 0.8,
         ease: "power1.out"
       });
