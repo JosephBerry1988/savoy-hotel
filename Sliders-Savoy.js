@@ -392,6 +392,111 @@ document.addEventListener('DOMContentLoaded', () => {
       }).mount();
     });
   }
+  
+    /* ============================================================
+     SLIDER 9 — .slider-gallery-thumb
+     ============================================================ */
+  function initSliderGalleryThumb() {
+    const sliders = document.querySelectorAll('.slider-gallery-thumb');
+    if (!sliders.length) return;
+
+    sliders.forEach(sliderEl => {
+      const splide = new Splide(sliderEl, {
+        perPage: 2.5,
+        perMove: 1,
+        focus: 'center',
+        type: 'loop',
+        gap: '0.4rem',
+        arrows: 'slider',
+        pagination: 'slider',
+        speed: 800,
+        dragAngleThreshold: 80,
+        rewind: true,
+        rewindSpeed: 800,
+        waitForTransition: false,
+        updateOnMove: true,
+        trimSpace: true,
+        breakpoints: {
+          1920: { perPage: 2.5 },
+          1680: { perPage: 2.5 },
+          991:  { perPage: 2.5 },
+          767:  { perPage: 2.5 },
+          479:  { perPage: 2.5 }
+        }
+      });
+
+      splide.mount();
+
+      const currentEl = sliderEl.querySelector('.slider-number.slider-amount');
+      const totalEl = sliderEl.querySelector('.slider-number.slider-count');
+
+      if (totalEl) totalEl.textContent = splide.length;
+      if (currentEl) currentEl.textContent = splide.index + 1;
+
+      splide.on('move', i => {
+        if (currentEl) currentEl.textContent = i + 1;
+      });
+
+      /* Center class logic here (unchanged) */
+      const applyCenterClass = (targetIndex = splide.index) => {
+        const slides = [...sliderEl.querySelectorAll('.splide__slide')];
+        slides.forEach(s => {
+          s.classList.remove('is-center');
+          const c = s.querySelector('.slider-crumb');
+          if (c) c.classList.remove('is-visible');
+        });
+
+        const realSlides = splide.Components.Slides.get();
+        realSlides.forEach(slideObj => {
+          if (slideObj.index === targetIndex) {
+            slideObj.slide.classList.add('is-center');
+            const c = slideObj.slide.querySelector('.slider-crumb');
+            if (c) c.classList.add('is-visible');
+          }
+        });
+      };
+
+      const updateByGeometry = () => {
+        const track = sliderEl.querySelector('.splide__track');
+        if (!track) return;
+
+        const trackRect = track.getBoundingClientRect();
+        const centerX = trackRect.left + trackRect.width / 2;
+        const slides = [...sliderEl.querySelectorAll('.splide__slide')];
+
+        let best = null;
+        let bestDist = Infinity;
+
+        slides.forEach(slideEl => {
+          const r = slideEl.getBoundingClientRect();
+          const slideCenter = r.left + r.width / 2;
+          const dist = Math.abs(slideCenter - centerX);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = slideEl;
+          }
+        });
+
+        slides.forEach(s => {
+          const c = s.querySelector('.slider-crumb');
+          if (s === best) {
+            s.classList.add('is-center');
+            if (c) c.classList.add('is-visible');
+          } else {
+            s.classList.remove('is-center');
+            if (c) c.classList.remove('is-visible');
+          }
+        });
+      };
+
+      splide.on('move', newIndex => applyCenterClass(newIndex));
+      splide.on('moved', () => requestAnimationFrame(updateByGeometry));
+      splide.on('mounted updated', updateByGeometry);
+      window.addEventListener('resize', updateByGeometry);
+
+      updateByGeometry();
+    });
+  }
 
   /* ============================================================
      INITIALIZE ALL SLIDERS
@@ -401,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSliderRooms();
   initSliderNews();
   initSliderGallery();
+  initSliderGalleryThumb();
   initSliderOffers();
   initSliderItems();
   initSliderRowCard();  // <-- ADDED HERE
